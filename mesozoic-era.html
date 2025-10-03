@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서대문자연사박물관 - 중생대 시대 3D Web 메타버스</title>
+    <link rel="stylesheet" href="./main.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      progress::-webkit-progress-bar {
+        border: 0;
+        height: 40px;
+        border-radius: 20px;
+      }
+      progress::-webkit-progress-value {
+        border: 0;
+        height: 40px;
+        border-radius: 20px;
+        background-color: rgb(16 185 129);
+      }
+      progress::-moz-progress-bar {
+        border: 0;
+        height: 40px;
+        border-radius: 20px;
+        background-color: gray;
+      }
+    </style>
+  </head>
+<body>
+  <script src="./mesozoic-js/main.js" type="module"></script>
+    <div id="container"
+          class="fixed w-[100vw] h-[100vh]"
+          >
+            <div id="health-bar"></div>
+          
+          <div id="time-display"
+                class="absolute text-[rgba(229,231,235)] right-[4%] top-[2%] sm:top-[4%] text-3xl font-semibold">00:00:00</div>
+          <!-- <button id="startBtn" class="timerBtn">Start</button> -->
+    </div>
+
+    <div 
+    id="loading"
+    class="fixed flex items-center justify-center z-50 w-[100vw] h-[100vh] bg-[rgba(0,0,0,0.9)]"
+  >
+    <div 
+      id="progress-bar-container"
+      class="flex flex-col h-[30%] w-[100vw] items-center justify-center"
+    >
+      <label 
+        id="label" 
+        for="progress-bar"
+        class="text-white text-3xl text-center"
+      >
+        Loading
+      </label>
+
+      <progress 
+        id="progress-bar" 
+        value="0" 
+        max="100"
+        class="items-center w-[60%] sm:w-[30%] mt-[7%] sm:mt-[3%] h-[50px]"
+      >
+      </progress>
+    </div>
+  </div>
+
+  <div 
+    id="instruction-image-container"
+    class="hidden fixed bg-[url(./mesozoic-instruction-1.png)] bg-[rgba(0,0,0,0.9)] bg-contain bg-center bg-no-repeat w-[100vw] h-[100vh] items-center justify-center opacity-90 z-50"
+  >
+    <button 
+      id="startBtn"
+      class="hidden relative top-[15%] sm:top-[20%] lg:top-[30%] w-24 h-10 touch-manipulation select-none text-base font-semibold leading-5 py-2 px-4 text-center bg-green-700 hover:bg-green-600 text-white border-none rounded-md cursor-pointer z-50"
+    >
+      START
+    </button>
+  </div>
+</body>
+</html>
