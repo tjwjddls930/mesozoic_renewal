@@ -1,5 +1,5 @@
 // import * as THREE from 'https://londonpark.xyz/three.module-0.118.1.js';
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.118.1/build/three.module.js';
+import * as THREE from 'three';
 
 export const entity = (() => {
 

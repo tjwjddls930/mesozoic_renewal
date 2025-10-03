@@ -18,3 +18,23 @@ code {
   width: 100vw;
   height: 100vh;
 }
+
+progress::-webkit-progress-bar {
+  border: 0;
+  height: 40px;
+  border-radius: 20px;
+}
+
+progress::-webkit-progress-value {
+  border: 0;
+  height: 40px;
+  border-radius: 20px;
+  background-color: rgb(16 185 129);
+}
+
+progress::-moz-progress-bar {
+  border: 0;
+  height: 40px;
+  border-radius: 20px;
+  background-color: gray;
+}
