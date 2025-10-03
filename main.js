@@ -1,6 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.118.1/build/three.module.js';
-// import * as THREE from 'https://londonpark.xyz/three.module-0.118.1.js';
-import {GLTFLoader} from 'https://cdn.jsdelivr.net/npm/three@0.118.1/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {entity} from './entity.js';
 import { player_entity } from './player-entity.js';
 import { third_person_camera } from './third-person-camera.js';
@@ -14,134 +13,126 @@ import { attack_controller } from './attack-controller.js';
 import { spatial_grid_controller } from './spatial-grid-controller.js';
 import { spatial_hash_grid } from './spatial-hash-grid.js';
 
-class Mesozoic {
-    constructor() {
-      this._Initialize();
-    }
-  
-    _Initialize() {
-      this._threejs = new THREE.WebGLRenderer({
-        antialias: true,
-      });
-      this._threejs.outputEncoding = THREE.sRGBEncoding;
-      this._threejs.gammaFactor = 2.2;
-      this._threejs.shadowMap.enabled = true;
-      this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
-      this._threejs.setPixelRatio(window.devicePixelRatio);
-      this._threejs.setSize(window.innerWidth, window.innerHeight);
-      this._threejs.domElement.id = 'threejs';
-      
-  
-      document.getElementById('container').appendChild(this._threejs.domElement);
-  
-      window.addEventListener('resize', () => {
-        this._OnWindowResize();
-      }, false);
-  
-      const fov = 60;
-      const aspect = 1920 / 1080;
-      const near = 1.0;
-      const far = 10000.0;
-      this._camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-      this._camera.position.set(25, 70, 100);
-  
-      this._scene = new THREE.Scene();
-      this._scene.background = new THREE.Color(0xFFFFFF);
-      this._scene.fog = new THREE.FogExp2(0x89b2eb, 0.001);
-      // this._scene.fog = new THREE.FogExp2(0xFFFFFF, 0.001);
-  
-      let light = new THREE.DirectionalLight(0xFFFFFF, 0.9);
-      light.position.set(0, 80, 0);
-      light.target.position.set(0, 3, 0);
-      light.castShadow = true;
-      light.shadow.bias = -0.001;
-      light.shadow.mapSize.width = 250;
-      light.shadow.mapSize.height = 250;
-      light.shadow.camera.near = 0.1;
-      light.shadow.camera.far = 1000.0;
-      light.shadow.camera.left = 250;
-      light.shadow.camera.right = -250;
-      light.shadow.camera.top = 250;
-      light.shadow.camera.bottom = -250;
+export class Mesozoic {
+  constructor() {
+    this._RAFBind = null;
+    this._resizeHandler = null;
+    this._running = true;
+    this._startButton = null;
+    this._startListeners = [];
+    this._timerIntervalId = null;
+    this._Initialize();
+  }
 
-      let light2 = new THREE.AmbientLight(0x404040);
-      this._scene.add(light);
-      this._scene.add(light2)  
-      this._sun = light;
+  _Initialize() {
+    this._threejs = new THREE.WebGLRenderer({
+      antialias: true,
+    });
+    this._threejs.outputEncoding = THREE.sRGBEncoding;
+    this._threejs.gammaFactor = 2.2;
+    this._threejs.shadowMap.enabled = true;
+    this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
+    this._threejs.setPixelRatio(window.devicePixelRatio);
+    this._threejs.setSize(window.innerWidth, window.innerHeight);
+    this._threejs.domElement.id = 'threejs';
 
-      const startBtn = document.querySelector("#startBtn");
-      // startBtn.style.cssText = "position: absolute; top: 50%; left: 50%; background-color:#2ea44f; border: 1px solid rgba(27, 31, 35, .15); border-radius: 6px; box-shadow: rgba(27, 31, 35, .1) 0 1px 0; box-sizing: border-box; color: #fff; cursor:pointer; font-family:Segoe UI; font-size: 14px; font-weight: 600; line-height: 20px; padding: 6px 16px; text-align:center; text-decoration: none; user-select: none; touch-action: manipulation; display: block;"
-      const timeDisplay = document.querySelector("#time-display");
-      // timeDisplay.style.cssText = "position: absolute; right: 4%; top: 8%; font-size: 30px; font-weight: 600;";
-      const progressBarContainer = document.querySelector("#progress-bar-container");
-      const progressBar = document.querySelector("#progress-bar");
-      const label = document.querySelector("#label");
-      const loadingScreen = document.querySelector("#loading");
-      const instructionImageContainer = document.querySelector("#instruction-image-container");
-      
-      const loadingManager = new THREE.LoadingManager();
-      loadingManager.onProgress = function(url, loaded, total) {
-        progressBar.value = (loaded/total) * 100;
-      }
-      
-      loadingManager.onLoad = function() {
-        startBtn.style.display = "block"
-        startBtn.style.display = "block";
-        progressBar.style.display = "none";
-        label.style.display = "none";
-        loadingScreen.style.display = "none";
-        instructionImageContainer.style.display = "flex";
-      }
-      let startTime = 0;
-      let elapsedTime = 0;
-      let currentTime = 0;
-      let paused = true;
-      let intervalId;
-      let hrs = 0;
-      let mins = 0;
-      let secs = 0;
 
-      startBtn.addEventListener("click", () => {
-        if(paused){
-          paused = false;
-          startTime = Date.now() - elapsedTime;
-          intervalId = setInterval(updateTime, 1000);
-        }
-      startBtn.style.display='none'
-      progressBarContainer.style.display = 'none';
-      instructionImageContainer.style.visibility = "hidden";
+    document.getElementById('container').appendChild(this._threejs.domElement);
 
-      // setTimeout(()=> {
-      //   this._LoadNPC_2();
-      // }, 10000);
-
-      // setTimeout(()=> {
-      //   this._LoadNPC_3();
-      // }, 20000);
-
-      // setTimeout(()=> {
-      //   this._LoadNPC_4();
-      // }, 30000);
+    this._resizeHandler = () => this._OnWindowResize();
+    window.addEventListener('resize', this._resizeHandler, false);
   
-      });
+    const fov = 60;
+    const aspect = 1920 / 1080;
+    const near = 1.0;
+    const far = 10000.0;
+    this._camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    this._camera.position.set(25, 70, 100);
 
-    function updateTime(){
+    this._scene = new THREE.Scene();
+    this._scene.background = new THREE.Color(0xFFFFFF);
+    this._scene.fog = new THREE.FogExp2(0x89b2eb, 0.001);
+    // this._scene.fog = new THREE.FogExp2(0xFFFFFF, 0.001);
+
+    let light = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    light.position.set(0, 80, 0);
+    light.target.position.set(0, 3, 0);
+    light.castShadow = true;
+    light.shadow.bias = -0.001;
+    light.shadow.mapSize.width = 250;
+    light.shadow.mapSize.height = 250;
+    light.shadow.camera.near = 0.1;
+    light.shadow.camera.far = 1000.0;
+    light.shadow.camera.left = 250;
+    light.shadow.camera.right = -250;
+    light.shadow.camera.top = 250;
+    light.shadow.camera.bottom = -250;
+
+    let light2 = new THREE.AmbientLight(0x404040);
+    this._scene.add(light);
+    this._scene.add(light2);
+    this._sun = light;
+
+    const startBtn = document.querySelector('#startBtn');
+    this._startButton = startBtn;
+    const timeDisplay = document.querySelector('#time-display');
+    const progressBarContainer = document.querySelector('#progress-bar-container');
+    const progressBar = document.querySelector('#progress-bar');
+    const label = document.querySelector('#label');
+    const loadingScreen = document.querySelector('#loading');
+    const instructionImageContainer = document.querySelector('#instruction-image-container');
+
+    const loadingManager = new THREE.LoadingManager();
+    loadingManager.onProgress = (url, loaded, total) => {
+      progressBar.value = (loaded / total) * 100;
+    };
+
+    loadingManager.onLoad = () => {
+      startBtn.style.display = 'block';
+      progressBar.style.display = 'none';
+      label.style.display = 'none';
+      loadingScreen.style.display = 'none';
+      instructionImageContainer.style.display = 'flex';
+    };
+
+    let startTime = 0;
+    let elapsedTime = 0;
+    let paused = true;
+    let hrs = 0;
+    let mins = 0;
+    let secs = 0;
+
+    const pad = (unit) => {
+      return (`0${unit}`).length > 2 ? unit : `0${unit}`;
+    };
+
+    const updateTime = () => {
       elapsedTime = Date.now() - startTime;
 
-    secs = Math.floor((elapsedTime / 1000) % 60);
-    mins = Math.floor((elapsedTime / (1000 * 60)) % 60);
-    hrs = Math.floor((elapsedTime / (1000 * 60 * 60)) % 60);
+      secs = Math.floor((elapsedTime / 1000) % 60);
+      mins = Math.floor((elapsedTime / (1000 * 60)) % 60);
+      hrs = Math.floor((elapsedTime / (1000 * 60 * 60)) % 60);
 
-    secs = pad(secs);
-    mins = pad(mins);
-    hrs = pad(hrs);
+      secs = pad(secs);
+      mins = pad(mins);
+      hrs = pad(hrs);
 
-    timeDisplay.textContent = `${hrs}:${mins}:${secs}`;
+      timeDisplay.textContent = `${hrs}:${mins}:${secs}`;
+    };
 
-    function pad(unit){
-        return (("0") + unit).length > 2 ? unit : "0" + unit
-    }
-  }
+    const handleStart = () => {
+      if (paused) {
+        paused = false;
+        startTime = Date.now() - elapsedTime;
+        this._timerIntervalId = setInterval(updateTime, 1000);
+      }
+      startBtn.style.display = 'none';
+      progressBarContainer.style.display = 'none';
+      instructionImageContainer.style.visibility = 'hidden';
+    };
+
+    this._registerStartListener(handleStart);
+
     const loader2 = new GLTFLoader(loadingManager);
     loader2.setPath('../mesozoic-resources/glb/map/');
     loader2.load('mesozoic_hdri_glb.glb', (glb) => {
@@ -162,7 +153,7 @@ class Mesozoic {
         c.castShadow = true;
         c.receiveShadow = true;
       });
-    })
+    });
 
     // loader2.load('mesozoic_modeling_glb_1.glb', (glb) => {
     //   this._target = glb.scene;
@@ -179,20 +170,29 @@ class Mesozoic {
     //   });
     // })
 
-      this._entityManager = new entity_manager.EntityManager();
-      this._grid = new spatial_hash_grid.SpatialHashGrid(
-          [[-1000, -1000], [1000, 1000]], [100, 100]);
-    
-      this._LoadPlayer(loadingManager);
-      this._LoadNPC_1(loadingManager);
-      this._LoadNPC_2(loadingManager);
-      this._LoadNPC_3(loadingManager);
-      this._LoadNPC_4(loadingManager);
-      this._previousRAF = null;
-      this._RAF();
+    this._entityManager = new entity_manager.EntityManager();
+    this._grid = new spatial_hash_grid.SpatialHashGrid(
+        [[-1000, -1000], [1000, 1000]], [100, 100]);
+
+    this._LoadPlayer(loadingManager);
+    this._LoadNPC_1(loadingManager);
+    this._LoadNPC_2(loadingManager);
+    this._LoadNPC_3(loadingManager);
+    this._LoadNPC_4(loadingManager);
+    this._previousRAF = null;
+    this._RAF();
+  }
+
+  _registerStartListener(callback) {
+    if (!this._startButton) {
+      return;
     }
 
-    _LoadPlayer() {
+    this._startButton.addEventListener('click', callback);
+    this._startListeners.push(callback);
+  }
+
+  _LoadPlayer() {
         const params = {
             camera: this._camera,
             scene: this._scene,
@@ -236,11 +236,9 @@ class Mesozoic {
         const m = monsters[math.rand_int(0, monsters.length - 1)];
   
         const npc = new entity.Entity();
-        const startBtn = document.querySelector("#startBtn");
-     
         npc.AddComponent(
             new spatial_grid_controller.SpatialGridController({grid: this._grid}));
-     
+
         npc.AddComponent(new npc_entity.NPC_1_Controller({
             camera: this._camera,
             scene: this._scene,
@@ -254,9 +252,9 @@ class Mesozoic {
         npc.SetQuaternion(new THREE.Vector3(
           0, 180, 0
         ));
-           startBtn.addEventListener("click", () => {
-            this._entityManager.Add(npc);
-              });
+        this._registerStartListener(() => {
+          this._entityManager.Add(npc);
+        });
       }
     }
 
@@ -271,7 +269,6 @@ class Mesozoic {
         const m = monsters[math.rand_int(0, monsters.length - 1)];
   
         const npc = new entity.Entity();
-        const startBtn = document.querySelector("#startBtn");
         npc.AddComponent(
             new spatial_grid_controller.SpatialGridController({grid: this._grid}));
         npc.AddComponent(new npc_entity.NPC_2_Controller({
@@ -285,7 +282,7 @@ class Mesozoic {
             (Math.random() * 2 - 1) * -250,
             0,
             (Math.random() * 2 - 1) * 250));
-         startBtn.addEventListener("click", () => {
+        this._registerStartListener(() => {
           this._entityManager.Add(npc);
         });
         // this._entityManager.Add(npc);
@@ -303,7 +300,6 @@ class Mesozoic {
         const m = monsters[math.rand_int(0, monsters.length - 1)];
   
         const npc = new entity.Entity();
-        const startBtn = document.querySelector("#startBtn");
         npc.AddComponent(
             new spatial_grid_controller.SpatialGridController({grid: this._grid}));
         npc.AddComponent(new npc_entity.NPC_3_Controller({
@@ -317,7 +313,7 @@ class Mesozoic {
             (Math.random() * 2 - 1) * -200,
             0,
             (Math.random() * 2 - 1) * 200));
-         startBtn.addEventListener("click", () => {
+        this._registerStartListener(() => {
           this._entityManager.Add(npc);
         });
         // this._entityManager.Add(npc);
@@ -335,7 +331,6 @@ class Mesozoic {
         const m = monsters[math.rand_int(0, monsters.length - 1)];
   
         const npc = new entity.Entity();
-        const startBtn = document.querySelector("#startBtn");
         npc.AddComponent(
             new spatial_grid_controller.SpatialGridController({grid: this._grid}));
         npc.AddComponent(new npc_entity.NPC_4_Controller({
@@ -349,7 +344,7 @@ class Mesozoic {
             (Math.random() * 2 - 1) * -200,
             0,
             (Math.random() * 2 - 1) * 200));
-         startBtn.addEventListener("click", () => {
+        this._registerStartListener(() => {
           this._entityManager.Add(npc);
         });
         // this._entityManager.Add(npc);
@@ -363,11 +358,14 @@ class Mesozoic {
     }
   
     _RAF() {
-      requestAnimationFrame((t) => {
+      this._RAFBind = requestAnimationFrame((t) => {
         // if (this._previousRAF === null) {
         //   this._previousRAF = t;
         // }
-  
+
+        if (!this._running) {
+          return;
+        }
         this._RAF();
   
         this._threejs.render(this._scene, this._camera);
@@ -378,16 +376,38 @@ class Mesozoic {
   
     _Step(timeElapsed) {
       const timeElapsedS = Math.min(1.0 / 30.0, timeElapsed * 0.001);
-  
+
     //   this._UpdateSun();
-  
+
       this._entityManager.Update(timeElapsedS);
+    }
+
+    dispose() {
+      this._running = false;
+      if (this._RAFBind) {
+        cancelAnimationFrame(this._RAFBind);
+        this._RAFBind = null;
+      }
+      if (this._resizeHandler) {
+        window.removeEventListener('resize', this._resizeHandler, false);
+        this._resizeHandler = null;
+      }
+      if (this._timerIntervalId) {
+        clearInterval(this._timerIntervalId);
+        this._timerIntervalId = null;
+      }
+      if (this._startButton && this._startListeners.length) {
+        for (const handler of this._startListeners) {
+          this._startButton.removeEventListener('click', handler);
+        }
+        this._startListeners = [];
+      }
+      this._startButton = null;
+      if (this._threejs?.domElement?.parentNode) {
+        this._threejs.domElement.parentNode.removeChild(this._threejs.domElement);
+      }
     }
   }
 
-  let _APP = null;
-  
-  window.addEventListener('DOMContentLoaded', () => {
-    _APP = new Mesozoic();
-  });
+export default Mesozoic;
   
